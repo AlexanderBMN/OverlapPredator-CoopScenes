@@ -21,6 +21,8 @@ from lib.benchmark_utils import ransac_pose_estimation, to_o3d_pcd, get_blue, ge
 from lib.trainer import Trainer
 from lib.loss import MetricLoss
 import shutil
+import aeifdataset as ad
+from aeifdataset import Dataloader, DataRecord
 setup_seed(0)
 
 
@@ -42,10 +44,43 @@ class ThreeDMatchDemo(Dataset):
     def __len__(self):
         return 1
 
-    def __getitem__(self,item): 
+    def __getitem__(self,item):
         # get pointcloud
-        src_pcd = torch.load(self.src_path).astype(np.float32)
-        tgt_pcd = torch.load(self.tgt_path).astype(np.float32)   
+        record = DataRecord("/mnt/hot_data/dataset/seq_1/id00999_2024-09-27_10-35-41.4mse")
+
+        # Access a single frame
+        # A frame contains sensor data and metadata for a 100ms period.
+        frame = record[0]
+        src_pcd = frame.vehicle.lidars.TOP
+        tgt_pcd = frame.tower.lidars.UPPER_PLATFORM
+
+        # Convert to numpy arrays
+        src_pcd = np.stack(
+            (src_pcd['x'], src_pcd['y'], src_pcd['z']),
+            axis=-1
+        )
+        tgt_pcd = np.stack(
+            (tgt_pcd['x'], tgt_pcd['y'], tgt_pcd['z']),
+            axis=-1
+        )
+
+        # Convert numpy arrays to Open3D point clouds
+        src_o3d_pcd = o3d.geometry.PointCloud()
+        src_o3d_pcd.points = o3d.utility.Vector3dVector(src_pcd)
+
+        tgt_o3d_pcd = o3d.geometry.PointCloud()
+        tgt_o3d_pcd.points = o3d.utility.Vector3dVector(tgt_pcd)
+
+        # Downsample the point clouds
+        src_o3d_pcd = src_o3d_pcd.voxel_down_sample(voxel_size=2.5)
+        tgt_o3d_pcd = tgt_o3d_pcd.voxel_down_sample(voxel_size=2.5)
+
+        # Convert Open3D point clouds back to numpy arrays
+        src_pcd = np.asarray(src_o3d_pcd.points).astype(np.float32)
+        tgt_pcd = np.asarray(tgt_o3d_pcd.points).astype(np.float32)
+
+        #src_pcd = torch.load(self.src_path).astype(np.float32)
+        #tgt_pcd = torch.load(self.tgt_path).astype(np.float32)
         
         
         #src_pcd = o3d.io.read_point_cloud(self.src_path)

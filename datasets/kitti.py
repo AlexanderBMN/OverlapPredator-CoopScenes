@@ -113,9 +113,9 @@ class KITTIDataset(Dataset):
                 xyz0_t = self.apply_transform(xyz0, M)
                 pcd0 = to_o3d_pcd(xyz0_t)
                 pcd1 = to_o3d_pcd(xyz1)
-                reg = open3d.registration.registration_icp(pcd0, pcd1, 0.2, np.eye(4),
-                                                        open3d.registration.TransformationEstimationPointToPoint(),
-                                                        open3d.registration.ICPConvergenceCriteria(max_iteration=200))
+                reg = open3d.pipelines.registration.registration_icp(pcd0, pcd1, 0.2, np.eye(4),
+                                                        open3d.pipelines.registration.TransformationEstimationPointToPoint(),
+                                                        open3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=200))
                 pcd0.transform(reg.transformation)
                 M2 = M @ reg.transformation
                 np.save(filename, M2)
@@ -171,7 +171,7 @@ class KITTIDataset(Dataset):
             src_pcd_input = src_pcd_input * scale
             tgt_pcd_input = tgt_pcd_input * scale
 
-            # shift the pcd
+          # s-d
             shift_src = np.random.uniform(-self.augment_shift_range, self.augment_shift_range, 3)
             shift_tgt = np.random.uniform(-self.augment_shift_range, self.augment_shift_range, 3)
 
