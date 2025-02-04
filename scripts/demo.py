@@ -54,7 +54,6 @@ class ThreeDMatchDemo(Dataset):
         src_pcd = frame.vehicle.lidars.TOP
         tgt_pcd = frame.tower.lidars.UPPER_PLATFORM
 
-        # Convert to numpy arrays
         src_pcd = np.stack(
             (src_pcd['x'], src_pcd['y'], src_pcd['z']),
             axis=-1
